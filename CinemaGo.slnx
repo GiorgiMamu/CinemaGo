@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="CinemaGo.API/CinemaGo.API.csproj" />
+  <Project Path="CinemaGo.Application/CinemaGo.Application.csproj" />
+  <Project Path="CinemaGo.Domain/CinemaGo.Domain.csproj" />
+  <Project Path="CinemaGo.Infrastructure/CinemaGo.Infrastructure.csproj" />
+</Solution>
