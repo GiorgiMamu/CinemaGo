@@ -16,4 +16,5 @@ public class Session : BaseEntity
     public decimal VipPrice { get; set; }
     public SessionStatus Status { get; set; } = SessionStatus.Scheduled;
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+    public DateTime? CancelledAt { get; set; }
 }

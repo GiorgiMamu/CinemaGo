@@ -1,6 +1,6 @@
 ﻿using CinemaGo.Domain.Common;
 using CinemaGo.Domain.Interfaces.Repositories;
-using CinemaGo.Infrastructure.Persistence;
+using CinemaGo.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 namespace CinemaGo.Infrastructure.Repositories;
 
@@ -15,9 +15,11 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
         _set = context.Set<T>();
     }
 
+    // FindAsync returns a tracked entity, so changes made in a service are saved by SaveChanges
     public async Task<T?> GetByIdAsync(int id, CancellationToken ct = default)
         => await _set.FindAsync(new object[] { id }, ct);
 
+    // read-only lists: AsNoTracking skips the change tracker, which is faster
     public async Task<List<T>> GetAllAsync(CancellationToken ct = default)
         => await _set.AsNoTracking().ToListAsync(ct);
 

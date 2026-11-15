@@ -1,6 +1,10 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+  </Folder>
   <Project Path="CinemaGo.API/CinemaGo.API.csproj" />
   <Project Path="CinemaGo.Application/CinemaGo.Application.csproj" />
   <Project Path="CinemaGo.Domain/CinemaGo.Domain.csproj" />
   <Project Path="CinemaGo.Infrastructure/CinemaGo.Infrastructure.csproj" />
+  <Project Path="CinemaGo.Tests/CinemaGo.Tests.csproj" Id="f82ead54-d324-4d37-b129-be8704b0903f" />
 </Solution>

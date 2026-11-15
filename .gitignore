@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+logs/
+CinemaGo.API/wwwroot/uploads/*
+!CinemaGo.API/wwwroot/uploads/.gitkeep

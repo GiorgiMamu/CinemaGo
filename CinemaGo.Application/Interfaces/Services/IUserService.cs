@@ -3,6 +3,10 @@ namespace CinemaGo.Application.Interfaces.Services;
 
 public interface IUserService
 {
-    Task<List<UserResponse>> GetAllAsync(CancellationToken ct = default);
-    Task<UserResponse> GetByIdAsync(int id, CancellationToken ct = default);
+    Task<PagedResult<UserResponse>> GetPagedAsync(UserFilter filter, CancellationToken ct = default);
+    Task<UserResponse> CreateAdminAsync(CreateAdminRequest request, CancellationToken ct = default);
+    Task<UserResponse> ChangeRoleAsync(string userId, ChangeRoleRequest request, CancellationToken ct = default);
+    Task<UserResponse> SetActiveAsync(string userId, SetActiveRequest request, CancellationToken ct = default);
+    Task DeleteAsync(string userId, CancellationToken ct = default);
+    Task DeleteMyAccountAsync(DeleteAccountRequest request, CancellationToken ct = default);
 }
