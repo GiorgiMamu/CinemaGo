@@ -3,6 +3,5 @@ namespace CinemaGo.Domain.Exceptions;
 
 public class UnauthorizedException : AppException
 {
-    public UnauthorizedException(string message = ErrorMessages.Unauthorized)
-        : base(message, ErrorCodes.Unauthorized) { }
+    public UnauthorizedException(Error? error = null) : base(error ?? Errors.General.Unauthorized) { }
 }

@@ -98,11 +98,9 @@ builder.Services.AddAuthentication(options =>
         OnChallenge = context =>
         {
             context.HandleResponse();
-            return ErrorResponseWriter.WriteAsync(context.HttpContext, StatusCodes.Status401Unauthorized,
-                ErrorCodes.Unauthorized, ErrorMessages.Unauthorized);
+            return ErrorResponseWriter.WriteAsync(context.HttpContext, StatusCodes.Status401Unauthorized, Errors.General.Unauthorized);
         },
-        OnForbidden = context => ErrorResponseWriter.WriteAsync(context.HttpContext, StatusCodes.Status403Forbidden,
-            ErrorCodes.Forbidden, ErrorMessages.Forbidden)
+        OnForbidden = context => ErrorResponseWriter.WriteAsync(context.HttpContext, StatusCodes.Status403Forbidden, Errors.General.Forbidden)
     };
 });
 builder.Services.AddAuthorization();
@@ -115,7 +113,7 @@ builder.Services.AddRateLimiter(options =>
         httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     options.OnRejected = async (context, _) => await ErrorResponseWriter.WriteAsync(context.HttpContext,
-        StatusCodes.Status429TooManyRequests, ErrorCodes.TooManyRequests, ErrorMessages.TooManyRequests);
+    StatusCodes.Status429TooManyRequests, Errors.General.TooManyRequests);
 });
 
 builder.Services.AddCors(options =>

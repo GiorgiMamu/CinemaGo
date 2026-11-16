@@ -10,16 +10,16 @@ public class FileUploadValidator : AbstractValidator<FileUpload>
 
     public FileUploadValidator()
     {
-        RuleFor(f => f.Length).GreaterThan(0).WithMessage(ErrorMessages.EmptyFile).OverridePropertyName("file")
-            .LessThanOrEqualTo(MaxBytes).WithMessage(ErrorMessages.FileTooLarge).OverridePropertyName("file");
+        RuleFor(f => f.Length).GreaterThan(0).WithMessage(ValidationMessages.FileEmpty).OverridePropertyName("file")
+            .LessThanOrEqualTo(MaxBytes).WithMessage(ValidationMessages.FileTooLarge).OverridePropertyName("file");
 
         RuleFor(f => f.FileName)
             .Must(n => AllowedExtensions.Contains(Path.GetExtension(n).ToLowerInvariant()))
-            .WithMessage(ErrorMessages.InvalidFileType).OverridePropertyName("file");
+            .WithMessage(ValidationMessages.FileInvalidType).OverridePropertyName("file");
 
         // the extension can be faked, so the first bytes (file signature) must match a real image too
         RuleFor(f => f.Content).Must(HasImageSignature)
-            .WithMessage(ErrorMessages.InvalidFileType).OverridePropertyName("file")
+            .WithMessage(ValidationMessages.FileInvalidType).OverridePropertyName("file")
             .When(f => f.Length > 0);
     }
 

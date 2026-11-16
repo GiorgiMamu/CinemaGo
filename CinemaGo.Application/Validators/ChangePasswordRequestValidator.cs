@@ -1,4 +1,5 @@
-﻿using CinemaGo.Domain.DTOs;
+﻿using CinemaGo.Domain.Constants;
+using CinemaGo.Domain.DTOs;
 using FluentValidation;
 namespace CinemaGo.Application.Validators;
 
@@ -7,6 +8,6 @@ public class ChangePasswordRequestValidator : AbstractValidator<ChangePasswordRe
     public ChangePasswordRequestValidator()
     {
         RuleFor(x => x.NewPassword).MustBeStrongPassword();
-        RuleFor(x => x.NewPassword).NotEqual(x => x.CurrentPassword).WithMessage("The new password must differ from the current one.");
+        RuleFor(x => x.NewPassword).NotEqual(x => x.CurrentPassword).WithMessage(ValidationMessages.PasswordSameAsCurrent);
     }
 }

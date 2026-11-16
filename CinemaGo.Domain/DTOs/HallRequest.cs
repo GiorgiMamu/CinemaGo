@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using CinemaGo.Domain.Constants;
 namespace CinemaGo.Domain.DTOs;
 
 public class HallRequest
 {
-    [Required(ErrorMessage = "Hall name is required."), StringLength(100, ErrorMessage = "Hall name cannot exceed 100 characters.")]
+    [Required(ErrorMessage = ValidationMessages.Required), StringLength(100, ErrorMessage = ValidationMessages.MaxLength)]
     public string Name { get; set; } = string.Empty;
 }

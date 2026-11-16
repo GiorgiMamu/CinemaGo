@@ -3,6 +3,5 @@ namespace CinemaGo.Domain.Exceptions;
 
 public class BadRequestException : AppException
 {
-    public BadRequestException(string message, string errorCode = ErrorCodes.BadRequest)
-        : base(message, errorCode) { }
+    public BadRequestException(Error error) : base(error) { }
 }

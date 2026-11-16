@@ -33,7 +33,7 @@ public class UserServiceTests
     {
         _current.IsInRole(RoleNames.SuperAdmin).Returns(false);
         Target("t", RoleNames.Admin);
-        await Assert.ThrowsAsync<ForbiddenException>(() => _sut.DeleteAsync("t"));
+        await Assert.ThrowsAsync<ForbiddenException>(() => _sut.DeleteAsync("t", TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public class UserServiceTests
         var booking = new Booking { Id = 1, Ticket = new Ticket() };
         _bookings.GetActiveFutureByUserAsync("t", Arg.Any<CancellationToken>()).Returns(new List<Booking> { booking });
 
-        await _sut.DeleteAsync("t");
+        await _sut.DeleteAsync("t", TestContext.Current.CancellationToken);
 
         Assert.Equal(BookingStatus.Cancelled, booking.Status);
         Assert.Equal(TicketStatus.Cancelled, booking.Ticket!.Status);
@@ -56,7 +56,7 @@ public class UserServiceTests
     {
         _current.IsInRole(RoleNames.SuperAdmin).Returns(true);
         Target("t", RoleNames.Admin);
-        await _sut.DeleteAsync("t");
+        await _sut.DeleteAsync("t", TestContext.Current.CancellationToken);
         await _identity.Received(1).AnonymizeAsync("t", Arg.Any<CancellationToken>());
     }
 
@@ -65,18 +65,18 @@ public class UserServiceTests
     {
         _current.IsInRole(RoleNames.SuperAdmin).Returns(true);
         Target("t", RoleNames.SuperAdmin);
-        await Assert.ThrowsAsync<ForbiddenException>(() => _sut.DeleteAsync("t"));
+        await Assert.ThrowsAsync<ForbiddenException>(() => _sut.DeleteAsync("t", TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task DeletingYourselfThroughTheAdminEndpoint_IsRejected()
-        => await Assert.ThrowsAsync<BadRequestException>(() => _sut.DeleteAsync("actor"));
+        => await Assert.ThrowsAsync<BadRequestException>(() => _sut.DeleteAsync("actor", TestContext.Current.CancellationToken));
 
     [Fact]
     public async Task DeleteMyAccount_WrongPassword_ThrowsUnauthorized()
     {
         Target("actor", RoleNames.Customer);
         _identity.CheckPasswordAsync("actor", "bad", Arg.Any<CancellationToken>()).Returns(false);
-        await Assert.ThrowsAsync<UnauthorizedException>(() => _sut.DeleteMyAccountAsync(new DeleteAccountRequest { Password = "bad" }));
+        await Assert.ThrowsAsync<UnauthorizedException>(() => _sut.DeleteMyAccountAsync(new DeleteAccountRequest { Password = "bad" }, TestContext.Current.CancellationToken));
     }
 }

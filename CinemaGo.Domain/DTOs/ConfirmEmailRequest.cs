@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using CinemaGo.Domain.Constants;
 namespace CinemaGo.Domain.DTOs;
 
 public class ConfirmEmailRequest
 {
-    [Required(ErrorMessage = "Email is required."), EmailAddress(ErrorMessage = "Email is not valid.")]
+    [Required(ErrorMessage = ValidationMessages.Required), EmailAddress(ErrorMessage = ValidationMessages.Email)]
     public string Email { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "The code is required."), RegularExpression(@"^\d{6}$", ErrorMessage = "The code must be exactly 6 digits.")]
+    [Required(ErrorMessage = ValidationMessages.Required), RegularExpression(@"^\d{6}$", ErrorMessage = ValidationMessages.SixDigitCode)]
     public string Code { get; set; } = string.Empty;
 }

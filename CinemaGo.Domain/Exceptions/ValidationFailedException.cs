@@ -3,8 +3,8 @@ namespace CinemaGo.Domain.Exceptions;
 
 public class ValidationFailedException : AppException
 {
-    public IDictionary<string, string[]> Errors { get; }
+    public IDictionary<string, string[]> FieldErrors { get; }
 
-    public ValidationFailedException(IDictionary<string, string[]> errors)
-        : base(ErrorMessages.ValidationFailed, ErrorCodes.ValidationFailed) => Errors = errors;
+    public ValidationFailedException(IDictionary<string, string[]> fieldErrors) : base(Errors.General.ValidationFailed)
+        => FieldErrors = fieldErrors;
 }

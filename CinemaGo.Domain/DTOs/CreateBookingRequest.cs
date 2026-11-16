@@ -1,13 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using CinemaGo.Domain.Constants;
 namespace CinemaGo.Domain.DTOs;
 
 public class CreateBookingRequest
 {
-    [Range(1, int.MaxValue, ErrorMessage = "A valid session id is required.")]
-    public int SessionId { get; set; }
-
-    [Required(ErrorMessage = "Select at least one seat."),
-     MinLength(1, ErrorMessage = "Select at least one seat."),
-     MaxLength(10, ErrorMessage = "You can book at most 10 seats at once.")]
+    [Range(1, int.MaxValue, ErrorMessage = ValidationMessages.RangeBetween)] public int SessionId { get; set; }
+    [Required(ErrorMessage = ValidationMessages.Required),
+     MinLength(1, ErrorMessage = ValidationMessages.MinItems),
+     MaxLength(10, ErrorMessage = ValidationMessages.MaxItems)]
     public List<int> SeatIds { get; set; } = new();
+    [StringLength(450, ErrorMessage = ValidationMessages.MaxLength)]
+    public string? OnBehalfOfUserId { get; set; }
 }

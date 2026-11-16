@@ -43,4 +43,20 @@ public class BookingRepository : GenericRepository<Booking>, IBookingRepository
                    .Where(b => b.UserId == userId && b.Status == BookingStatus.Active && b.Session.StartsAt > now)
                    .ToListAsync(ct);
     }
+    public async Task<(List<Booking> Items, int Total)> GetPagedAsync(BookingFilter f, CancellationToken ct = default)
+    {
+        var q = WithDetails().AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(f.UserId)) q = q.Where(b => b.UserId == f.UserId);
+        if (f.SessionId.HasValue) q = q.Where(b => b.SessionId == f.SessionId);
+        if (f.MovieId.HasValue) q = q.Where(b => b.Session.MovieId == f.MovieId);
+        if (f.Status.HasValue) q = q.Where(b => b.Status == f.Status);
+        if (f.From.HasValue) q = q.Where(b => b.CreatedAt >= f.From);
+        if (f.To.HasValue) q = q.Where(b => b.CreatedAt <= f.To);
+
+        var total = await q.CountAsync(ct);
+        var items = await q.OrderByDescending(b => b.CreatedAt)
+                           .Skip((f.Page - 1) * f.PageSize).Take(f.PageSize).ToListAsync(ct);
+        return (items, total);
+    }
 }

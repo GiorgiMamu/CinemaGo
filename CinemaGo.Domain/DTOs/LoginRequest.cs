@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using CinemaGo.Domain.Constants;
 namespace CinemaGo.Domain.DTOs;
 
 public class LoginRequest
 {
-    [Required(ErrorMessage = "Email is required."), EmailAddress(ErrorMessage = "Email is not valid.")]
+    [Required(ErrorMessage = ValidationMessages.Required), EmailAddress(ErrorMessage = ValidationMessages.Email)]
     public string Email { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "Password is required.")]
+    [Required(ErrorMessage = ValidationMessages.Required)]
     public string Password { get; set; } = string.Empty;
 }

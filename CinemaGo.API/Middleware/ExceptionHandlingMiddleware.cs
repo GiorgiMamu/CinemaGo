@@ -30,23 +30,26 @@ public class ExceptionHandlingMiddleware
                 throw;
             }
 
-            var (status, code, message, errors) = Map(ex);
+            var (status, error, fieldErrors) = Map(ex);
             if (status >= 500)
                 _logger.LogError(ex, "Unhandled exception. TraceId {TraceId}", context.TraceIdentifier);
             else
-                _logger.LogWarning("Request rejected [{Status} {Code}] TraceId {TraceId}: {Message}", status, code, context.TraceIdentifier, message);
-            await ErrorResponseWriter.WriteAsync(context, status, code, message, errors);
+                _logger.LogWarning("Request rejected [{Status} {Code}] TraceId {TraceId}: {Message}",
+                    status, error.Code, context.TraceIdentifier, error.Message);
+
+            await ErrorResponseWriter.WriteAsync(context, status, error, fieldErrors);
         }
     }
 
-    private static (int Status, string Code, string Message, IDictionary<string, string[]>? Errors) Map(Exception ex) => ex switch
+    // exception type -> HTTP status. Unknown exceptions never leak details: generic 500.
+    private static (int Status, Error Error, IDictionary<string, string[]>? FieldErrors) Map(Exception ex) => ex switch
     {
-        ValidationFailedException v => (StatusCodes.Status400BadRequest, v.ErrorCode, v.Message, v.Errors),
-        BadRequestException b => (StatusCodes.Status400BadRequest, b.ErrorCode, b.Message, null),
-        UnauthorizedException u => (StatusCodes.Status401Unauthorized, u.ErrorCode, u.Message, null),
-        ForbiddenException f => (StatusCodes.Status403Forbidden, f.ErrorCode, f.Message, null),
-        NotFoundException n => (StatusCodes.Status404NotFound, n.ErrorCode, n.Message, null),
-        ConflictException c => (StatusCodes.Status409Conflict, c.ErrorCode, c.Message, null),
-        _ => (StatusCodes.Status500InternalServerError, ErrorCodes.ServerError, ErrorMessages.Unexpected, null)
+        ValidationFailedException v => (StatusCodes.Status400BadRequest, v.Error, v.FieldErrors),
+        BadRequestException b => (StatusCodes.Status400BadRequest, b.Error, null),
+        UnauthorizedException u => (StatusCodes.Status401Unauthorized, u.Error, null),
+        ForbiddenException f => (StatusCodes.Status403Forbidden, f.Error, null),
+        NotFoundException n => (StatusCodes.Status404NotFound, n.Error, null),
+        ConflictException c => (StatusCodes.Status409Conflict, c.Error, null),   // includes DuplicateKeyException
+        _ => (StatusCodes.Status500InternalServerError, Errors.General.Unexpected, null)
     };
 }

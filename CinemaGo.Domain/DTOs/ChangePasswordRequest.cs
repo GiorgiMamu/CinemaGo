@@ -1,14 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using CinemaGo.Domain.Constants;
 namespace CinemaGo.Domain.DTOs;
 
 public class ChangePasswordRequest
 {
-    [Required(ErrorMessage = "Current password is required.")]
+    [Required(ErrorMessage = ValidationMessages.Required)]
     public string CurrentPassword { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "New password is required."), StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be 8-100 characters long.")]
+    [Required(ErrorMessage = ValidationMessages.Required), StringLength(100, MinimumLength = 8, ErrorMessage = ValidationMessages.LengthBetween)]
     public string NewPassword { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "Please confirm the new password."), Compare(nameof(NewPassword), ErrorMessage = "Passwords do not match.")]
+    [Required(ErrorMessage = ValidationMessages.Required), Compare(nameof(NewPassword), ErrorMessage = ValidationMessages.Compare)]
     public string ConfirmNewPassword { get; set; } = string.Empty;
 }

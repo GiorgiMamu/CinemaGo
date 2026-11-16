@@ -3,6 +3,5 @@ namespace CinemaGo.Domain.Exceptions;
 
 public class ConflictException : AppException
 {
-    public ConflictException(string message, string errorCode = ErrorCodes.Conflict, Exception? inner = null)
-        : base(message, errorCode, inner) { }
+    public ConflictException(Error error, Exception? inner = null) : base(error, inner) { }
 }

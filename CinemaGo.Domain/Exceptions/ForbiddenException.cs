@@ -3,6 +3,5 @@ namespace CinemaGo.Domain.Exceptions;
 
 public class ForbiddenException : AppException
 {
-    public ForbiddenException(string message = ErrorMessages.Forbidden, string errorCode = ErrorCodes.Forbidden)
-        : base(message, errorCode) { }
+    public ForbiddenException(Error? error = null) : base(error ?? Errors.General.Forbidden) { }
 }

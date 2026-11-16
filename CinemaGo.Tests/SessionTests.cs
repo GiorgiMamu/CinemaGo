@@ -1,5 +1,6 @@
 ﻿using CinemaGo.Application.Common;
 using CinemaGo.Application.Services;
+using CinemaGo.Domain.Constants;
 using CinemaGo.Domain.DTOs;
 using CinemaGo.Domain.Entities;
 using CinemaGo.Domain.Enums;
@@ -53,8 +54,8 @@ public class SessionServiceTests
             .Returns(new List<Session> { TestData.NewSession(id: 9, startsAt: start.AddMinutes(30)) });
 
         var ex = await Assert.ThrowsAsync<ConflictException>(() => _sut.CreateAsync(
-            new SessionRequest { MovieId = 1, HallId = 1, StartsAt = start, StandardPrice = 10, VipPrice = 20 }));
-        Assert.Equal("session_overlap", ex.ErrorCode);
+            new SessionRequest { MovieId = 1, HallId = 1, StartsAt = start, StandardPrice = 10, VipPrice = 20 }, TestContext.Current.CancellationToken));
+        Assert.Equal(Errors.Session.Overlap.Code, ex.ErrorCode);
     }
 
     [Fact]
@@ -72,7 +73,7 @@ public class SessionServiceTests
             new() { Id = "a", UserName = "A", Email = "a@x.com" }, new() { Id = "b", UserName = "B", Email = "b@x.com" }
         });
 
-        await _sut.CancelAsync(1);
+        await _sut.CancelAsync(1, TestContext.Current.CancellationToken);
 
         Assert.Equal(SessionStatus.Cancelled, session.Status);
         Assert.All(bookings, b => Assert.Equal(BookingStatus.Cancelled, b.Status));

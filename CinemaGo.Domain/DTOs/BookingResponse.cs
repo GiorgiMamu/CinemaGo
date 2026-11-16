@@ -16,4 +16,7 @@ public class BookingResponse
     public DateTime CreatedAt { get; set; }
     public DateTime? CancelledAt { get; set; }
     public TicketSummaryResponse? Ticket { get; set; }
+    public string UserId { get; set; } = string.Empty;
+    public string? UserName { get; set; }
+    public string? UserEmail { get; set; }
 }

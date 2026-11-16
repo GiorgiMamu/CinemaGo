@@ -7,4 +7,5 @@ public interface IBookingService
     Task CancelAsync(int bookingId, CancellationToken ct = default);
     Task<PagedResult<BookingResponse>> GetMyAsync(PageRequest page, CancellationToken ct = default);
     Task<BookingResponse> GetByIdAsync(int bookingId, CancellationToken ct = default);
+    Task<PagedResult<BookingResponse>> GetAllAsync(BookingFilter filter, CancellationToken ct = default);
 }

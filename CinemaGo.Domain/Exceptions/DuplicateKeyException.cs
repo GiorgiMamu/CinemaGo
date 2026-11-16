@@ -3,6 +3,5 @@ namespace CinemaGo.Domain.Exceptions;
 
 public class DuplicateKeyException : ConflictException
 {
-    public DuplicateKeyException(string message, Exception? inner = null)
-        : base(message, ErrorCodes.DuplicateValue, inner) { }
+    public DuplicateKeyException(Exception? inner = null) : base(Errors.General.DuplicateValue, inner) { }
 }

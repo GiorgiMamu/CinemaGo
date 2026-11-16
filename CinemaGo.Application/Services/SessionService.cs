@@ -82,14 +82,14 @@ public class SessionService : ISessionService
     public async Task<SessionResponse> UpdateAsync(int id, SessionRequest r, CancellationToken ct = default)
     {
         var session = await _sessions.GetByIdAsync(id, ct) ?? throw new NotFoundException(nameof(Session), id);
-        if (session.Status == SessionStatus.Cancelled) throw new ConflictException(ErrorMessages.SessionCancelledNoEdit);
+        if (session.Status == SessionStatus.Cancelled) throw new ConflictException(Errors.Session.CancelledNoEdit);
 
         var movie = await _movies.GetByIdAsync(r.MovieId, ct) ?? throw new NotFoundException(nameof(Movie), r.MovieId);
         if (!await _halls.ExistsAsync(r.HallId, ct)) throw new NotFoundException(nameof(Hall), r.HallId);
 
         // seats belong to a hall, so the hall cannot change once someone has booked
         if (r.HallId != session.HallId && (await _bookings.GetActiveSeatIdsAsync(id, ct)).Count > 0)
-            throw new ConflictException(ErrorMessages.SessionHallLocked);
+            throw new ConflictException(Errors.Session.HallLocked);
 
         await EnsureNoOverlapAsync(r.HallId, r.StartsAt, movie.DurationMinutes, id, ct);
 
@@ -104,7 +104,7 @@ public class SessionService : ISessionService
     public async Task CancelAsync(int id, CancellationToken ct = default)
     {
         var session = await _sessions.GetWithDetailsAsync(id, ct) ?? throw new NotFoundException(nameof(Session), id);
-        if (session.Status == SessionStatus.Cancelled) throw new ConflictException(ErrorMessages.SessionAlreadyCancelled);
+        if (session.Status == SessionStatus.Cancelled) throw new ConflictException(Errors.Session.AlreadyCancelled);
 
         var now = DateTime.UtcNow;
         session.Status = SessionStatus.Cancelled;
@@ -148,6 +148,6 @@ public class SessionService : ISessionService
 
         var clash = neighbours.Any(o => SessionTimeRules.Overlaps(
             start, end, o.StartsAt, SessionTimeRules.GetEnd(o.StartsAt, o.Movie.DurationMinutes)));
-        if (clash) throw new ConflictException(ErrorMessages.SessionOverlap, ErrorCodes.SessionOverlap);
+        if (clash) throw new ConflictException(Errors.Session.Overlap);
     }
 }

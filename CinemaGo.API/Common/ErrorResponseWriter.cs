@@ -1,26 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.WebUtilities;
+﻿using CinemaGo.Domain.Constants;
+using CinemaGo.Domain.DTOs;
 namespace CinemaGo.API.Common;
 
 public static class ErrorResponseWriter
 {
-    public static Task WriteAsync(HttpContext context, int status, string code, string message,
-        IDictionary<string, string[]>? errors = null)
+    public static Task WriteAsync(HttpContext context, int status, Error error,
+        IDictionary<string, string[]>? fieldErrors = null)
     {
-        var problem = new ProblemDetails
-        {
-            Type = $"https://httpstatuses.io/{status}",
-            Title = ReasonPhrases.GetReasonPhrase(status),
-            Status = status,
-            Instance = context.Request.Path
-        };
-        problem.Extensions["success"] = false;
-        problem.Extensions["message"] = message;      // the single human-readable text, same field name as successes
-        problem.Extensions["code"] = code;            // stable machine-readable code for the frontend
-        problem.Extensions["traceId"] = context.TraceIdentifier;
-        if (errors is { Count: > 0 }) problem.Extensions["errors"] = errors;
+        var body = ApiResponse<object>.Fail(error.Message, error.Code, context.TraceIdentifier,
+            fieldErrors is { Count: > 0 } ? fieldErrors : null);
 
         context.Response.StatusCode = status;
-        return context.Response.WriteAsJsonAsync(problem, options: null, contentType: "application/problem+json");
+        return context.Response.WriteAsJsonAsync(body);   // application/json, camelCase
     }
 }

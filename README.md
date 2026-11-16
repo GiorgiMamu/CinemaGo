@@ -49,8 +49,14 @@ Update-Database -Project CinemaGo.Infrastructure -StartupProject CinemaGo.API
 ```
 
 ## Responses
-Success: `{ "success": true, "message": "...", "data": ... }`
-Error: `ProblemDetails` + `{ "success": false, "message": "...", "code": "seat_taken", "traceId": "...", "errors": { "field": ["..."] } }`
+Every response (success and failure) uses the same envelope:
+```json
+{ "success": true,  "message": "Movie created successfully.", "data": { } }
+{ "success": false, "message": "...", "data": null, "errors": { "field": ["..."] }, "code": "Booking.SeatTaken", "traceId": "..." }
+```
+`code` is stable and meant for clients; `errors` appears only for validation failures.
+Texts live in `Domain/Constants`: `Errors.cs` (failures), `ValidationMessages.cs` (invalid input), `SuccessMessages.cs`.
+
 
 ## Business rules
 - A seat has at most one active booking per session (filtered unique index + service check + concurrency handling).

@@ -27,7 +27,7 @@ public class HallService : IHallService
     public async Task<HallResponse> CreateAsync(HallRequest r, CancellationToken ct = default)
     {
         if (await _repo.GetByNameAsync(r.Name, ct) is not null)
-            throw new ConflictException(ErrorMessages.AlreadyExists("Hall", r.Name));
+            throw new ConflictException(Errors.General.AlreadyExists("Hall", r.Name));
         var hall = _mapper.Map<Hall>(r);
         await _repo.AddAsync(hall, ct);
         await _uow.SaveChangesAsync(ct);
@@ -39,7 +39,7 @@ public class HallService : IHallService
     {
         var hall = await _repo.GetByIdAsync(id, ct) ?? throw new NotFoundException(nameof(Hall), id);
         var same = await _repo.GetByNameAsync(r.Name, ct);
-        if (same is not null && same.Id != id) throw new ConflictException(ErrorMessages.AlreadyExists("Hall", r.Name));
+        if (same is not null && same.Id != id) throw new ConflictException(Errors.General.AlreadyExists("Hall", r.Name));
         _mapper.Map(r, hall);
         await _uow.SaveChangesAsync(ct);
         return _mapper.Map<HallResponse>(hall);

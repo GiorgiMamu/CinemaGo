@@ -27,7 +27,7 @@ public class GenreService : IGenreService
     public async Task<GenreResponse> CreateAsync(GenreRequest r, CancellationToken ct = default)
     {
         if (await _repo.GetByNameAsync(r.Name, ct) is not null)
-            throw new ConflictException(ErrorMessages.AlreadyExists("Genre", r.Name));
+            throw new ConflictException(Errors.General.AlreadyExists("Genre", r.Name));
         var genre = _mapper.Map<Genre>(r);
         await _repo.AddAsync(genre, ct);
         await _uow.SaveChangesAsync(ct);
@@ -39,7 +39,7 @@ public class GenreService : IGenreService
     {
         var genre = await _repo.GetByIdAsync(id, ct) ?? throw new NotFoundException(nameof(Genre), id);
         var same = await _repo.GetByNameAsync(r.Name, ct);
-        if (same is not null && same.Id != id) throw new ConflictException(ErrorMessages.AlreadyExists("Genre", r.Name));
+        if (same is not null && same.Id != id) throw new ConflictException(Errors.General.AlreadyExists("Genre", r.Name));
         _mapper.Map(r, genre);
         await _uow.SaveChangesAsync(ct);
         return _mapper.Map<GenreResponse>(genre);

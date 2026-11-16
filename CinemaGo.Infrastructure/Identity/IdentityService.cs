@@ -40,7 +40,7 @@ public class IdentityService : IIdentityService
     {
         var user = await _users.FindByIdAsync(userId);
         if (user is null) return false;
-        if (await _users.IsLockedOutAsync(user)) throw new ForbiddenException(ErrorMessages.AccountLocked, ErrorCodes.AccountLocked);
+        if (await _users.IsLockedOutAsync(user)) throw new ForbiddenException(Errors.Auth.AccountLocked);
 
         if (await _users.CheckPasswordAsync(user, password))
         {
@@ -53,8 +53,8 @@ public class IdentityService : IIdentityService
 
     public async Task<UserResponse> CreateUserAsync(string userName, string email, string password, string role, bool activate, CancellationToken ct = default)
     {
-        if (await _users.FindByEmailAsync(email) is not null) throw new ConflictException(ErrorMessages.EmailTaken);
-        if (await _users.FindByNameAsync(userName) is not null) throw new ConflictException(ErrorMessages.UserNameTaken);
+        if (await _users.FindByEmailAsync(email) is not null) throw new ConflictException(Errors.Auth.EmailTaken);
+        if (await _users.FindByNameAsync(userName) is not null) throw new ConflictException(Errors.Auth.UserNameTaken);
 
         var user = new ApplicationUser { UserName = userName, Email = email, IsActive = activate, EmailConfirmed = activate };
         var created = await _users.CreateAsync(user, password);   // Identity hashes the password and applies the policy
@@ -119,7 +119,7 @@ public class IdentityService : IIdentityService
         var user = await GetAsync(userId);
         if (user.EmailConfirmed) return;   // idempotent; never re-activates an account an admin disabled
         if (!await _users.VerifyUserTokenAsync(user, TokenOptions.DefaultEmailProvider, ConfirmPurpose, code))
-            throw new BadRequestException(ErrorMessages.InvalidCode, ErrorCodes.InvalidCode);
+            throw new BadRequestException(Errors.Auth.InvalidCode);
 
         user.EmailConfirmed = true;
         user.IsActive = true;
@@ -134,7 +134,7 @@ public class IdentityService : IIdentityService
     {
         var user = await GetAsync(userId);
         if (!await _users.VerifyUserTokenAsync(user, TokenOptions.DefaultEmailProvider, ResetPurpose, code))
-            throw new BadRequestException(ErrorMessages.InvalidCode, ErrorCodes.InvalidCode);
+            throw new BadRequestException(Errors.Auth.InvalidCode);
 
         // Identity's own reset token applies the password policy and rotates the stamp (code becomes unusable, old sessions die)
         var token = await _users.GeneratePasswordResetTokenAsync(user);

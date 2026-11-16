@@ -32,7 +32,7 @@ public class SeatService : ISeatService
     {
         if (!await _halls.ExistsAsync(r.HallId, ct)) throw new NotFoundException(nameof(Hall), r.HallId);
         if (await _seats.PositionExistsAsync(r.HallId, r.RowNumber, r.SeatNumber, null, ct))
-            throw new ConflictException(ErrorMessages.SeatPositionTaken);
+            throw new ConflictException(Errors.Seat.PositionTaken);
         var seat = _mapper.Map<Seat>(r);
         await _seats.AddAsync(seat, ct);
         await _uow.SaveChangesAsync(ct);
@@ -45,7 +45,7 @@ public class SeatService : ISeatService
         var seat = await _seats.GetByIdAsync(id, ct) ?? throw new NotFoundException(nameof(Seat), id);
         if (!await _halls.ExistsAsync(r.HallId, ct)) throw new NotFoundException(nameof(Hall), r.HallId);
         if (await _seats.PositionExistsAsync(r.HallId, r.RowNumber, r.SeatNumber, id, ct))
-            throw new ConflictException(ErrorMessages.SeatPositionTaken);
+            throw new ConflictException(Errors.Seat.PositionTaken);
         _mapper.Map(r, seat);
         await _uow.SaveChangesAsync(ct);
         return _mapper.Map<SeatResponse>(seat);

@@ -38,7 +38,7 @@ public class AuthService : IAuthService
     {
         // unknown e-mail gives the same answer as a wrong code (no account enumeration)
         var user = await _identity.FindByEmailAsync(r.Email, ct)
-            ?? throw new BadRequestException(ErrorMessages.InvalidCode, ErrorCodes.InvalidCode);
+            ?? throw new BadRequestException(Errors.Auth.InvalidCode);
         await _identity.ConfirmEmailAsync(user.Id, r.Code, ct);
         _logger.LogInformation("Account activated: {UserId}", user.Id);
     }
@@ -55,14 +55,14 @@ public class AuthService : IAuthService
         if (user is null || !await _identity.CheckPasswordAsync(user.Id, r.Password, ct))
         {
             _logger.LogWarning("Failed login attempt");
-            throw new UnauthorizedException(ErrorMessages.InvalidCredentials);
+            throw new UnauthorizedException(Errors.Auth.InvalidCredentials);
         }
         if (!user.IsActive)
         {
             _logger.LogWarning("Login blocked for inactive account {UserId}", user.Id);
             throw user.EmailConfirmed
-                ? new ForbiddenException(ErrorMessages.AccountDisabled)
-                : new ForbiddenException(ErrorMessages.AccountNotActivated, ErrorCodes.AccountNotActivated);
+                ? new ForbiddenException(Errors.Auth.AccountDisabled)
+                : new ForbiddenException(Errors.Auth.AccountNotActivated);
         }
         _logger.LogInformation("User logged in: {UserId}", user.Id);
         return await GenerateJwtTokenAsync(user, ct);
@@ -96,7 +96,7 @@ public class AuthService : IAuthService
     public async Task ResetPasswordAsync(ResetPasswordRequest r, CancellationToken ct = default)
     {
         var user = await _identity.FindByEmailAsync(r.Email, ct)
-            ?? throw new BadRequestException(ErrorMessages.InvalidCode, ErrorCodes.InvalidCode);
+            ?? throw new BadRequestException(Errors.Auth.InvalidCode);
         await _identity.ResetPasswordAsync(user.Id, r.Code, r.NewPassword, ct);
         _logger.LogInformation("Password reset: {UserId}", user.Id);
     }

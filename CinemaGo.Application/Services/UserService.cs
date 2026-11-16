@@ -49,7 +49,7 @@ public class UserService : IUserService
     public async Task DeleteAsync(string userId, CancellationToken ct = default)
     {
         var actorId = _currentUser.UserId ?? throw new UnauthorizedException();
-        if (userId == actorId) throw new BadRequestException(ErrorMessages.CannotDeleteViaAdmin);
+        if (userId == actorId) throw new BadRequestException(Errors.User.CannotDeleteViaAdmin);
         await EnsureCanManageAsync(userId, ct);
         await DeleteCoreAsync(userId, ct);
     }
@@ -58,8 +58,8 @@ public class UserService : IUserService
     {
         var userId = _currentUser.UserId ?? throw new UnauthorizedException();
         var me = await _identity.FindByIdAsync(userId, ct) ?? throw new NotFoundException("User", userId);
-        if (me.Roles.Contains(RoleNames.SuperAdmin)) throw new ForbiddenException(ErrorMessages.SuperAdminProtected);
-        if (!await _identity.CheckPasswordAsync(userId, r.Password, ct)) throw new UnauthorizedException(ErrorMessages.InvalidCredentials);
+        if (me.Roles.Contains(RoleNames.SuperAdmin)) throw new ForbiddenException(Errors.User.SuperAdminProtected);
+        if (!await _identity.CheckPasswordAsync(userId, r.Password, ct)) throw new UnauthorizedException(Errors.Auth.InvalidCredentials);
         await DeleteCoreAsync(userId, ct);
     }
 
@@ -67,9 +67,9 @@ public class UserService : IUserService
     private async Task EnsureCanManageAsync(string targetId, CancellationToken ct)
     {
         var target = await _identity.FindByIdAsync(targetId, ct) ?? throw new NotFoundException("User", targetId);
-        if (target.Roles.Contains(RoleNames.SuperAdmin)) throw new ForbiddenException(ErrorMessages.SuperAdminProtected);
+        if (target.Roles.Contains(RoleNames.SuperAdmin)) throw new ForbiddenException(Errors.User.SuperAdminProtected);
         if (!_currentUser.IsInRole(RoleNames.SuperAdmin) && !target.Roles.All(role => role == RoleNames.Customer))
-            throw new ForbiddenException(ErrorMessages.AdminCannotManageStaff);
+            throw new ForbiddenException(Errors.User.AdminCannotManageStaff);
     }
 
     private async Task DeleteCoreAsync(string userId, CancellationToken ct)

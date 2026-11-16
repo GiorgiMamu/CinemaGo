@@ -32,14 +32,14 @@ public class TicketService : ITicketService
     {
         var ticket = await _tickets.GetByCodeTrackedAsync(code, ct) ?? throw new NotFoundException(nameof(Ticket), code);
 
-        if (ticket.Status == TicketStatus.Cancelled) throw new ConflictException(ErrorMessages.TicketCancelled, ErrorCodes.TicketCancelled);
-        if (ticket.Status == TicketStatus.Used) throw new ConflictException(ErrorMessages.TicketAlreadyUsed, ErrorCodes.TicketAlreadyUsed);
+        if (ticket.Status == TicketStatus.Cancelled) throw new ConflictException(Errors.Ticket.Cancelled);
+        if (ticket.Status == TicketStatus.Used) throw new ConflictException(Errors.Ticket.AlreadyUsed);
 
         var session = ticket.Booking.Session;
         var now = DateTime.UtcNow;
         var end = session.StartsAt.AddMinutes(session.Movie.DurationMinutes);
         if (now < session.StartsAt.AddMinutes(-60) || now > end)
-            throw new ConflictException(ErrorMessages.TicketNotValidNow, ErrorCodes.TicketNotValidNow);
+            throw new ConflictException(Errors.Ticket.NotValidNow);
 
         ticket.Status = TicketStatus.Used;
         ticket.UsedAt = now;
