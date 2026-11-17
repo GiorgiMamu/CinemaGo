@@ -43,8 +43,11 @@ public static class DependencyInjection
         services.AddScoped<ITicketRepository, TicketRepository>();
 
         services.AddScoped<IIdentityService, IdentityService>();
+
+        services.AddSingleton<EmailQueue>();
+        services.AddSingleton<IEmailSender, QueuedEmailSender>();
         // real Gmail SMTP when credentials exist, otherwise the logging fake
-        services.AddScoped<IEmailSender>(sp => sp.GetRequiredService<IOptions<EmailSettings>>().Value.IsConfigured
+        services.AddSingleton<IEmailTransport>(sp => sp.GetRequiredService<IOptions<EmailSettings>>().Value.IsConfigured
             ? ActivatorUtilities.CreateInstance<SmtpEmailSender>(sp)
             : ActivatorUtilities.CreateInstance<FakeEmailSender>(sp));
         services.AddSingleton<IFileStorage>(new LocalFileStorage(webRootPath));

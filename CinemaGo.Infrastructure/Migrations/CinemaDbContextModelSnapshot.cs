@@ -192,6 +192,9 @@ namespace CinemaGo.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Title")
+                        .IsUnique();
+
                     b.ToTable("Movies", t =>
                         {
                             t.HasCheckConstraint("CK_Movies_AgeRating", "[AgeRating] >= 0");
@@ -1671,7 +1674,7 @@ namespace CinemaGo.Infrastructure.Migrations
                     b.HasOne("CinemaGo.Domain.Entities.Genre", "Genre")
                         .WithMany("MovieGenres")
                         .HasForeignKey("GenreId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("CinemaGo.Domain.Entities.Movie", "Movie")

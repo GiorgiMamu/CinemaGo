@@ -66,4 +66,10 @@ public class ValidatorTests
         var r = new ResetPasswordRequest { Email = "j@x.com", Code = "123456", NewPassword = "alllowercase", ConfirmNewPassword = "alllowercase" };
         Assert.False(new ResetPasswordRequestValidator().Validate(r).IsValid);
     }
+    [Fact]
+    public void Session_NonUtcStart_IsInvalid()
+    {
+        var r = new SessionRequest { MovieId = 1, HallId = 1, StartsAt = new DateTime(2035, 1, 1, 18, 0, 0, DateTimeKind.Unspecified), StandardPrice = 10, VipPrice = 20 };
+        Assert.False(new SessionRequestValidator().Validate(r).IsValid);
+    }
 }

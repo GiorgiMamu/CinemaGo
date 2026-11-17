@@ -13,4 +13,6 @@ public class GenreRepository : GenericRepository<Genre>, IGenreRepository
 
     public Task<List<Genre>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken ct = default)
         => _set.Where(g => ids.Contains(g.Id)).ToListAsync(ct);
+    public Task<bool> IsUsedAsync(int genreId, CancellationToken ct = default)
+    => _context.Set<MovieGenre>().AnyAsync(mg => mg.GenreId == genreId, ct);
 }

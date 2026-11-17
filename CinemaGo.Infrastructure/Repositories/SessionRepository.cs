@@ -58,4 +58,7 @@ public class SessionRepository : GenericRepository<Session>, ISessionRepository
     public Task<List<Session>> GetStartedScheduledAsync(DateTime now, CancellationToken ct = default)
     => _set.Include(s => s.Movie)
            .Where(s => s.Status == SessionStatus.Scheduled && s.StartsAt <= now).ToListAsync(ct);
+   
+
+    
 }

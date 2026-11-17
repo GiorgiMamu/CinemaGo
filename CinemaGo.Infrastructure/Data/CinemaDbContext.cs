@@ -50,6 +50,7 @@ public class CinemaDbContext : IdentityDbContext<ApplicationUser>
             e.Property(x => x.Title).IsRequired().HasMaxLength(200);
             e.Property(x => x.Description).HasMaxLength(2000);
             e.Property(x => x.PosterPath).HasMaxLength(500);
+            e.HasIndex(x => x.Title).IsUnique();
             e.ToTable(t =>
             {
                 t.HasCheckConstraint("CK_Movies_Duration", "[DurationMinutes] > 0");
@@ -62,7 +63,7 @@ public class CinemaDbContext : IdentityDbContext<ApplicationUser>
         {
             e.HasKey(x => new { x.MovieId, x.GenreId });
             e.HasOne(x => x.Movie).WithMany(m => m.MovieGenres).HasForeignKey(x => x.MovieId).OnDelete(DeleteBehavior.Cascade);
-            e.HasOne(x => x.Genre).WithMany(g => g.MovieGenres).HasForeignKey(x => x.GenreId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Genre).WithMany(g => g.MovieGenres).HasForeignKey(x => x.GenreId).OnDelete(DeleteBehavior.Restrict);
             e.HasData(SeedData.MovieGenres);
         });
 
@@ -111,5 +112,10 @@ public class CinemaDbContext : IdentityDbContext<ApplicationUser>
             e.HasIndex(x => x.BookingId).IsUnique();
             e.Property(x => x.Status).HasDefaultValue(TicketStatus.Valid);
         });
+    }
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
+        configurationBuilder.Properties<DateTime?>().HaveConversion<NullableUtcDateTimeConverter>();
     }
 }

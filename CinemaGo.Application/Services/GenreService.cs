@@ -48,6 +48,7 @@ public class GenreService : IGenreService
     public async Task DeleteAsync(int id, CancellationToken ct = default)
     {
         var genre = await _repo.GetByIdAsync(id, ct) ?? throw new NotFoundException(nameof(Genre), id);
+        if (await _repo.IsUsedAsync(id, ct)) throw new ConflictException(Errors.Genre.InUse);
         _repo.Remove(genre);
         await _uow.SaveChangesAsync(ct);
         _logger.LogInformation("Genre deleted: {GenreId}", id);

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CinemaGo.Application.Common;
 using CinemaGo.Application.Interfaces.Services;
+using CinemaGo.Domain.Constants;
 using CinemaGo.Domain.DTOs;
 using CinemaGo.Domain.Entities;
 using CinemaGo.Domain.Exceptions;
@@ -44,31 +45,55 @@ public class MovieService : IMovieService
 
     public async Task<MovieResponse> CreateAsync(MovieRequest r, CancellationToken ct = default)
     {
+        var existingMovies = await _movies.GetAllAsync(ct);
+
+        if (existingMovies.Any(m =>
+            string.Equals(m.Title.Trim(), r.Title.Trim(), StringComparison.OrdinalIgnoreCase)))
+            throw new ConflictException(Errors.General.AlreadyExists(nameof(Movie), r.Title));
+
         await EnsureGenresExistAsync(r.GenreIds, ct);
+
         var movie = _mapper.Map<Movie>(r);
+
         foreach (var genreId in r.GenreIds.Distinct())
             movie.MovieGenres.Add(new MovieGenre { GenreId = genreId });
+
         await _movies.AddAsync(movie, ct);
         await _uow.SaveChangesAsync(ct);
+
         _logger.LogInformation("Movie created: {MovieId}", movie.Id);
-        return await GetByIdAsync(movie.Id, ct);   // reload so genre names are populated
+
+        return await GetByIdAsync(movie.Id, ct);
     }
 
     public async Task<MovieResponse> UpdateAsync(int id, MovieRequest r, CancellationToken ct = default)
     {
-        var movie = await _movies.GetWithGenresAsync(id, ct) ?? throw new NotFoundException(nameof(Movie), id);
+        var movie = await _movies.GetWithGenresAsync(id, ct)
+            ?? throw new NotFoundException(nameof(Movie), id);
+
+        var existingMovies = await _movies.GetAllAsync(ct);
+
+        if (existingMovies.Any(m =>
+            m.Id != id &&
+            string.Equals(m.Title.Trim(), r.Title.Trim(), StringComparison.OrdinalIgnoreCase)))
+            throw new ConflictException(Errors.General.AlreadyExists(nameof(Movie), r.Title));
+
         await EnsureGenresExistAsync(r.GenreIds, ct);
+
         _mapper.Map(r, movie);
 
-        // diff the join rows: remove what is gone, add what is new
         var wanted = r.GenreIds.Distinct().ToHashSet();
+
         foreach (var link in movie.MovieGenres.Where(mg => !wanted.Contains(mg.GenreId)).ToList())
             movie.MovieGenres.Remove(link);
+
         var existing = movie.MovieGenres.Select(mg => mg.GenreId).ToHashSet();
+
         foreach (var genreId in wanted.Where(g => !existing.Contains(g)))
             movie.MovieGenres.Add(new MovieGenre { MovieId = id, GenreId = genreId });
 
         await _uow.SaveChangesAsync(ct);
+
         return await GetByIdAsync(id, ct);
     }
 

@@ -1,8 +1,7 @@
-﻿using CinemaGo.Domain.Interfaces.External;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 namespace CinemaGo.Infrastructure.Notifications;
 
-public class FakeEmailSender : IEmailSender
+public class FakeEmailSender : IEmailTransport
 {
     private readonly ILogger<FakeEmailSender> _logger;
     public FakeEmailSender(ILogger<FakeEmailSender> logger) => _logger = logger;

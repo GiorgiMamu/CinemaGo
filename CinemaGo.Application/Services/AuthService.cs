@@ -36,11 +36,17 @@ public class AuthService : IAuthService
 
     public async Task ConfirmEmailAsync(ConfirmEmailRequest r, CancellationToken ct = default)
     {
-        // unknown e-mail gives the same answer as a wrong code (no account enumeration)
         var user = await _identity.FindByEmailAsync(r.Email, ct)
             ?? throw new BadRequestException(Errors.Auth.InvalidCode);
+        var alreadyConfirmed = user.EmailConfirmed;
         await _identity.ConfirmEmailAsync(user.Id, r.Code, ct);
         _logger.LogInformation("Account activated: {UserId}", user.Id);
+
+        if (!alreadyConfirmed)
+        {
+            var (subject, body) = EmailTemplates.Welcome(user.UserName);
+            await TrySendAsync(user.Email, subject, body, ct);
+        }
     }
 
     public async Task ResendConfirmationAsync(EmailRequest r, CancellationToken ct = default)
@@ -99,13 +105,23 @@ public class AuthService : IAuthService
             ?? throw new BadRequestException(Errors.Auth.InvalidCode);
         await _identity.ResetPasswordAsync(user.Id, r.Code, r.NewPassword, ct);
         _logger.LogInformation("Password reset: {UserId}", user.Id);
+
+        var (subject, body) = EmailTemplates.PasswordChanged(user.UserName);
+        await TrySendAsync(user.Email, subject, body, ct);
     }
 
     public async Task ChangePasswordAsync(ChangePasswordRequest r, CancellationToken ct = default)
     {
         var id = _currentUser.UserId ?? throw new UnauthorizedException();
+        var me = await _identity.FindByIdAsync(id, ct);
         await _identity.ChangePasswordAsync(id, r.CurrentPassword, r.NewPassword, ct);   // rotates the stamp: log in again
         _logger.LogInformation("Password changed: {UserId}", id);
+
+        if (me is not null)
+        {
+            var (subject, body) = EmailTemplates.PasswordChanged(me.UserName);
+            await TrySendAsync(me.Email, subject, body, ct);
+        }
     }
 
     // ---------- helpers ----------

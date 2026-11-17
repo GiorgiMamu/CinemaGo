@@ -66,4 +66,8 @@ public static class Errors
         public static readonly Error AlreadyUsed = new("Ticket.AlreadyUsed", "This ticket has already been used.");
         public static readonly Error NotValidNow = new("Ticket.NotValidNow", "A ticket can be checked in from 60 minutes before the session until it ends.");
     }
+    public static class Genre
+    {
+        public static readonly Error InUse = new("Genre.InUse", "This genre is used by one or more movies. Remove it from those movies first.");
+    }
 }

@@ -93,9 +93,12 @@ public class SessionService : ISessionService
 
         await EnsureNoOverlapAsync(r.HallId, r.StartsAt, movie.DurationMinutes, id, ct);
 
+        var oldStart = session.StartsAt;
+        var oldMovieId = session.MovieId;
         _mapper.Map(r, session);
         await _uow.SaveChangesAsync(ct);
         _logger.LogInformation("Session updated: {SessionId}", id);
+        if (session.StartsAt != oldStart || session.MovieId != oldMovieId) await NotifyRescheduledAsync(id, oldStart, ct);
         return await GetByIdAsync(id, ct);
     }
 
@@ -121,9 +124,8 @@ public class SessionService : ISessionService
             if (!users.TryGetValue(group.Key, out var user)) continue;
             try
             {
-                await _email.SendAsync(user.Email, $"Session cancelled: {session.Movie.Title}",
-                    $"Dear {user.UserName}, the session of '{session.Movie.Title}' on {session.StartsAt:yyyy-MM-dd HH:mm} UTC was cancelled. " +
-                    $"Your {group.Count()} booking(s) and ticket(s) were cancelled automatically.", ct);
+                var (subject, body) = EmailTemplates.SessionCancelled(user.UserName, session.Movie.Title, session.StartsAt, group.Count());
+                await _email.SendAsync(user.Email, subject, body, ct);
             }
             catch (Exception ex) { _logger.LogWarning(ex, "Could not send cancellation e-mail to user {UserId}", user.Id); }
         }
@@ -150,4 +152,23 @@ public class SessionService : ISessionService
             start, end, o.StartsAt, SessionTimeRules.GetEnd(o.StartsAt, o.Movie.DurationMinutes)));
         if (clash) throw new ConflictException(Errors.Session.Overlap);
     }
+    private async Task NotifyRescheduledAsync(int sessionId, DateTime oldStart, CancellationToken ct)
+    {
+        var session = await _sessions.GetWithDetailsAsync(sessionId, ct);
+        var bookings = await _bookings.GetActiveBySessionAsync(sessionId, ct);
+        if (session is null || bookings.Count == 0) return;
+
+        var users = (await _identity.GetByIdsAsync(bookings.Select(x => x.UserId).Distinct(), ct)).ToDictionary(u => u.Id);
+        foreach (var group in bookings.GroupBy(x => x.UserId))
+        {
+            if (!users.TryGetValue(group.Key, out var user)) continue;
+            try
+            {
+                var (subject, body) = EmailTemplates.SessionRescheduled(user.UserName, session.Movie.Title, oldStart, session.StartsAt, group.Count());
+                await _email.SendAsync(user.Email, subject, body, ct);
+            }
+            catch (Exception ex) { _logger.LogWarning(ex, "Could not queue the reschedule e-mail for user {UserId}", user.Id); }
+        }
+    }
+
 }

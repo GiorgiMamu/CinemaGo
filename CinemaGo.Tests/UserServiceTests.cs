@@ -22,7 +22,7 @@ public class UserServiceTests
     {
         _current.UserId.Returns("actor");
         _bookings.GetActiveFutureByUserAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(new List<Booking>());
-        _sut = new UserService(_identity, _bookings, Substitute.For<IUnitOfWork>(), _current, NullLogger<UserService>.Instance);
+        _sut = new UserService(_identity, _bookings, Substitute.For<IUnitOfWork>(), _current, Substitute.For<IEmailSender>(), NullLogger<UserService>.Instance);
     }
 
     private void Target(string id, params string[] roles)

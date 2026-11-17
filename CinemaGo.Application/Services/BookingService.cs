@@ -90,6 +90,7 @@ public class BookingService : IBookingService
 
         _logger.LogInformation("User {OwnerId} booked {Count} seat(s) on session {SessionId} (made by {ActorId})",
             ownerId, created.Count, session.Id, actorId);
+        await NotifyBookingConfirmedAsync(ownerId, created, ct);
         return _mapper.Map<List<BookingResponse>>(created);
     }
 
@@ -113,7 +114,7 @@ public class BookingService : IBookingService
         await _uow.SaveChangesAsync(ct);
         _logger.LogInformation("Booking {BookingId} cancelled by {ActorId} ({By})", bookingId, actorId, isOwner ? "owner" : "staff");
 
-        if (!isOwner) await NotifyCustomerAsync(booking, ct);
+        await NotifyBookingCancelledAsync(booking, byStaff: !isOwner, ct);
     }
 
     public async Task<PagedResult<BookingResponse>> GetMyAsync(PageRequest page, CancellationToken ct = default)
@@ -167,20 +168,28 @@ public class BookingService : IBookingService
     }
 
     // a failed e-mail must never undo the cancellation
-    private async Task NotifyCustomerAsync(Booking booking, CancellationToken ct)
+    // e-mails only enqueue; a failure must never undo a booking or a cancellation
+    private async Task NotifyBookingConfirmedAsync(string ownerId, List<Booking> created, CancellationToken ct)
+    {
+        try
+        {
+            var user = await _identity.FindByIdAsync(ownerId, ct);
+            if (user is null) return;
+            var (subject, body) = EmailTemplates.BookingConfirmed(user.UserName, created);
+            await _email.SendAsync(user.Email, subject, body, ct);
+        }
+        catch (Exception ex) { _logger.LogWarning(ex, "Could not queue the booking e-mail for user {UserId}", ownerId); }
+    }
+
+    private async Task NotifyBookingCancelledAsync(Booking booking, bool byStaff, CancellationToken ct)
     {
         try
         {
             var user = await _identity.FindByIdAsync(booking.UserId, ct);
             if (user is null) return;
-            await _email.SendAsync(user.Email, $"Booking cancelled: {booking.Session.Movie.Title}",
-                $"Dear {user.UserName}, your booking for '{booking.Session.Movie.Title}' on {booking.Session.StartsAt:yyyy-MM-dd HH:mm} UTC " +
-                $"(row {booking.Seat.RowNumber}, seat {booking.Seat.SeatNumber}) was cancelled by the cinema staff. " +
-                "Your ticket is no longer valid.", ct);
+            var (subject, body) = EmailTemplates.BookingCancelled(user.UserName, booking, byStaff);
+            await _email.SendAsync(user.Email, subject, body, ct);
         }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Could not send booking-cancellation e-mail for booking {BookingId}", booking.Id);
-        }
+        catch (Exception ex) { _logger.LogWarning(ex, "Could not queue the cancellation e-mail for booking {BookingId}", booking.Id); }
     }
 }

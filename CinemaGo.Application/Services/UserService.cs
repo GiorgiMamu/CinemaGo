@@ -1,4 +1,5 @@
-﻿using CinemaGo.Application.Interfaces;
+﻿using CinemaGo.Application.Common;
+using CinemaGo.Application.Interfaces;
 using CinemaGo.Application.Interfaces.Services;
 using CinemaGo.Domain.Constants;
 using CinemaGo.Domain.DTOs;
@@ -16,9 +17,11 @@ public class UserService : IUserService
     private readonly ICurrentUserService _currentUser;
     private readonly ILogger<UserService> _logger;
 
+    private readonly IEmailSender _email;
+
     public UserService(IIdentityService identity, IBookingRepository bookings, IUnitOfWork uow,
-        ICurrentUserService currentUser, ILogger<UserService> logger)
-    { _identity = identity; _bookings = bookings; _uow = uow; _currentUser = currentUser; _logger = logger; }
+        ICurrentUserService currentUser, IEmailSender email, ILogger<UserService> logger)
+    { _identity = identity; _bookings = bookings; _uow = uow; _currentUser = currentUser; _email = email; _logger = logger; }
 
     public Task<PagedResult<UserResponse>> GetPagedAsync(UserFilter filter, CancellationToken ct = default)
         => _identity.GetUsersAsync(filter, ct);
@@ -51,7 +54,7 @@ public class UserService : IUserService
         var actorId = _currentUser.UserId ?? throw new UnauthorizedException();
         if (userId == actorId) throw new BadRequestException(Errors.User.CannotDeleteViaAdmin);
         await EnsureCanManageAsync(userId, ct);
-        await DeleteCoreAsync(userId, ct);
+        await DeleteCoreAsync(userId, byStaff: true, ct);
     }
 
     public async Task DeleteMyAccountAsync(DeleteAccountRequest r, CancellationToken ct = default)
@@ -60,7 +63,7 @@ public class UserService : IUserService
         var me = await _identity.FindByIdAsync(userId, ct) ?? throw new NotFoundException("User", userId);
         if (me.Roles.Contains(RoleNames.SuperAdmin)) throw new ForbiddenException(Errors.User.SuperAdminProtected);
         if (!await _identity.CheckPasswordAsync(userId, r.Password, ct)) throw new UnauthorizedException(Errors.Auth.InvalidCredentials);
-        await DeleteCoreAsync(userId, ct);
+        await DeleteCoreAsync(userId, byStaff: false, ct);
     }
 
     // SuperAdmin: never touched. Admin: customers only. SuperAdmin: admins and customers.
@@ -72,15 +75,24 @@ public class UserService : IUserService
             throw new ForbiddenException(Errors.User.AdminCannotManageStaff);
     }
 
-    private async Task DeleteCoreAsync(string userId, CancellationToken ct)
+    private async Task DeleteCoreAsync(string userId, bool byStaff, CancellationToken ct)
     {
+        var user = await _identity.FindByIdAsync(userId, ct);   // read BEFORE anonymization wipes the e-mail
+
         var bookings = await _bookings.GetActiveFutureByUserAsync(userId, ct);
         var now = DateTime.UtcNow;
         foreach (var booking in bookings) booking.Cancel(now);   // booking + ticket
         if (bookings.Count > 0) await _uow.SaveChangesAsync(ct);
 
         await _identity.AnonymizeAsync(userId, ct);
-        _logger.LogInformation("User {UserId} deleted by {ActorId}; {Count} future booking(s) cancelled",
-            userId, _currentUser.UserId, bookings.Count);
+        _logger.LogInformation("User {UserId} deleted by {ActorId}; {Count} future booking(s) cancelled", userId, _currentUser.UserId, bookings.Count);
+
+        if (user is null) return;
+        try
+        {
+            var (subject, body) = EmailTemplates.AccountDeleted(user.UserName, byStaff);
+            await _email.SendAsync(user.Email, subject, body, ct);
+        }
+        catch (Exception ex) { _logger.LogWarning(ex, "Could not queue the account-deleted e-mail for user {UserId}", userId); }
     }
 }

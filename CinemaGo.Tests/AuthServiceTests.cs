@@ -129,4 +129,19 @@ public class AuthServiceTests
         await _sut.LogoutAsync(TestContext.Current.CancellationToken);
         await _identity.Received(1).InvalidateSessionsAsync("u1", Arg.Any<CancellationToken>());
     }
+    [Fact]
+    public async Task ConfirmEmail_FirstTime_SendsWelcomeEmail()
+    {
+        _identity.FindByEmailAsync("j@x.com", Arg.Any<CancellationToken>()).Returns(User(active: false, confirmed: false));
+        await _sut.ConfirmEmailAsync(new ConfirmEmailRequest { Email = "j@x.com", Code = "123456" }, TestContext.Current.CancellationToken);
+        await _email.Received(1).SendAsync("j@x.com", Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ConfirmEmail_AlreadyConfirmed_SendsNothing()
+    {
+        _identity.FindByEmailAsync("j@x.com", Arg.Any<CancellationToken>()).Returns(User(active: true, confirmed: true));
+        await _sut.ConfirmEmailAsync(new ConfirmEmailRequest { Email = "j@x.com", Code = "123456" }, TestContext.Current.CancellationToken);
+        await _email.DidNotReceiveWithAnyArgs().SendAsync(default!, default!, default!, Arg.Any<CancellationToken>());
+    }
 }

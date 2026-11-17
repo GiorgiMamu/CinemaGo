@@ -42,6 +42,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddHostedService<DatabaseInitializerHostedService>();      // must stay first: migrates and seeds
 builder.Services.AddHostedService<SessionMaintenanceHostedService>();
+builder.Services.AddHostedService<EmailDispatcherHostedService>();
 
 // swagger (summaries come from the XML comments of the controllers)
 builder.Services.AddEndpointsApiExplorer();

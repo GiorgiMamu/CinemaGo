@@ -180,14 +180,35 @@ public class BookingServiceTests
     }
 
     [Fact]
-    public async Task Cancel_OwnerCancelsOwnBooking_NoEmailIsSent()
+    public async Task Cancel_OwnerCancelsOwnBooking_ReceivesConfirmationEmail()
     {
-        _bookings.GetWithDetailsAsync(5, Arg.Any<CancellationToken>()).Returns(
-            new Booking { Id = 5, UserId = "user-1", Seat = TestData.NewSeat(1), Session = TestData.NewSession() });
+        _bookings.GetWithDetailsAsync(5, Arg.Any<CancellationToken>()).Returns(new Booking
+        {
+            Id = 5,
+            UserId = "user-1",
+            Seat = TestData.NewSeat(1),
+            Session = TestData.NewSession(),
+            Ticket = new Ticket()
+        });
+        _identity.FindByIdAsync("user-1", Arg.Any<CancellationToken>())
+                 .Returns(new UserResponse { Id = "user-1", UserName = "john", Email = "john@x.com" });
 
         await _sut.CancelAsync(5, TestContext.Current.CancellationToken);
 
-        await _email.DidNotReceiveWithAnyArgs().SendAsync(default!, default!, default!, TestContext.Current.CancellationToken);
+        await _email.Received(1).SendAsync("john@x.com", Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Create_SendsConfirmationEmailContainingTheTicketCode()
+    {
+        _identity.FindByIdAsync("user-1", Arg.Any<CancellationToken>())
+                 .Returns(new UserResponse { Id = "user-1", UserName = "john", Email = "john@x.com" });
+        Arrange(TestData.NewSession(), TestData.NewSeat(1));
+
+        await _sut.CreateAsync(new CreateBookingRequest { SessionId = 1, SeatIds = { 1 } }, TestContext.Current.CancellationToken);
+
+        await _email.Received(1).SendAsync("john@x.com", Arg.Any<string>(),
+            Arg.Is<string>(body => body.Contains(_added[0].Ticket!.TicketCode)), Arg.Any<CancellationToken>());
     }
 
     [Fact]

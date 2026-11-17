@@ -26,6 +26,7 @@ public static class ValidationMessages
     public const string SeatIdsUnique = "Seat ids must be unique.";
     public const string SeatIdPositive = "Seat id must be positive.";
     public const string StartMustBeFuture = "Start time must be in the future (send UTC).";
+    public const string StartMustBeUtc = "Start time must be in UTC.";
     public const string VipBelowStandard = "VIP price cannot be lower than the standard price.";
     public const string FileEmpty = "The uploaded file is empty.";
     public const string FileTooLarge = "The file exceeds the maximum allowed size.";

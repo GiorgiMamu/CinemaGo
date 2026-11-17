@@ -1,15 +1,14 @@
 ﻿using System.Net;
 using System.Net.Mail;
-using CinemaGo.Domain.Interfaces.External;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 namespace CinemaGo.Infrastructure.Notifications;
 
-public class SmtpEmailSender : IEmailSender
+public class SmtpEmailSender : IEmailTransport
 {
     private readonly EmailSettings _settings;
     private readonly ILogger<SmtpEmailSender> _logger;
-
     public SmtpEmailSender(IOptions<EmailSettings> settings, ILogger<SmtpEmailSender> logger)
     { _settings = settings.Value; _logger = logger; }
 
@@ -18,8 +17,10 @@ public class SmtpEmailSender : IEmailSender
         using var message = new MailMessage
         {
             From = new MailAddress(_settings.FromAddress ?? _settings.Username!, _settings.FromName),
-            Subject = subject,
+            Subject = subject.ReplaceLineEndings(" "),   // a line break in a subject could inject mail headers
+            SubjectEncoding = Encoding.UTF8,
             Body = body,
+            BodyEncoding = Encoding.UTF8,
             IsBodyHtml = true
         };
         message.To.Add(to);
